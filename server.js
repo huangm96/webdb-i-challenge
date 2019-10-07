@@ -22,15 +22,19 @@ server.get("/api/accounts/:id", (req, res) => {
     .from("accounts")
     .where("id", "=", req.params.id)
     .first()
-    .then(account => {
-      res.status(200).json(account);
+      .then(account => {
+        if(account){
+            res.status(200).json(account);
+        } else {
+            res.status(400).json({ message: "invalid account id" });
+      }
     })
     .catch(error => {
       res.status(500).json(error);
     });
 });
 
-server.post("/api/accounts", (req, res) => {
+server.post("/api/accounts",validateAccountInfo,(req, res) => {
   db("accounts")
     .insert(req.body, "id")
     .then(ids => {
@@ -41,7 +45,7 @@ server.post("/api/accounts", (req, res) => {
 });
 
 
-server.put("/api/accounts/:id", (req, res) => {
+server.put("/api/accounts/:id",validateId, (req, res) => {
     db("accounts")
       .where({ id: req.params.id })
       .update(req.body)
@@ -55,7 +59,7 @@ server.put("/api/accounts/:id", (req, res) => {
       });
 });
 
-server.delete("/api/accounts/:id", (req, res) => { 
+server.delete("/api/accounts/:id",validateId, (req, res) => { 
     db("accounts")
       .where({ id: req.params.id })
       .del()
@@ -69,4 +73,29 @@ server.delete("/api/accounts/:id", (req, res) => {
         res.status(500).json({ error: error });
       });
 })
+
+function validateAccountInfo(req, res, next) {
+    if (!req.body) {
+        res.status(400).json({message:"please provide the account info"})
+    } else if (!req.body.name || !req.body.budget) {
+        res.status(400).json({ message: "missing required name or/and budget" });
+    }
+}
+
+function validateId(req, res, next) {
+     db.select("*")
+       .from("accounts")
+       .where("id", "=", req.params.id)
+       .first()
+       .then(account => {
+         if (account) {
+             next();
+         } else {
+           res.status(400).json({ message: "invalid account id" });
+         }
+       })
+       .catch(error => {
+         res.status(500).json(error);
+       });
+}
 module.exports = server;
