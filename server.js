@@ -13,7 +13,7 @@ server.get("/api/accounts/", (req, res) => {
       res.status(200).json(accounts);
     })
     .catch(error => {
-      res.status(500).json(error);
+        res.status(500).json({ error:error, message: "The accounts information could not be retrieved." });
     });
 });
 
@@ -22,15 +22,20 @@ server.get("/api/accounts/:id", (req, res) => {
     .from("accounts")
     .where("id", "=", req.params.id)
     .first()
-      .then(account => {
-        if(account){
-            res.status(200).json(account);
-        } else {
-            res.status(400).json({ message: "invalid account id" });
+    .then(account => {
+      if (account) {
+        res.status(200).json(account);
+      } else {
+        res.status(400).json({ message: "invalid account id" });
       }
     })
     .catch(error => {
-      res.status(500).json(error);
+      res
+        .status(500)
+        .json({
+          error: error,
+          message: "The account information could not be retrieved."
+        });
     });
 });
 
@@ -40,7 +45,10 @@ server.post("/api/accounts",validateAccountInfo,(req, res) => {
     .then(ids => {
       res.status(200).json({ id: ids, newData: req.body });
     }).catch(error => {
-        res.status(500).json({ error: error})
+        res.status(500).json({
+          error: error,
+          message: "The account information could not be saved."
+        });
     });
 });
 
@@ -55,7 +63,10 @@ server.put("/api/accounts/:id",validateId, (req, res) => {
           .json({ count: count, id: req.params.id, updatedData: req.body });
       })
       .catch(error => {
-        res.status(500).json({ error: error });
+        res.status(500).json({
+          error: error,
+          message: "The account information could not be modified."
+        });
       });
 });
 
@@ -70,7 +81,10 @@ server.delete("/api/accounts/:id",validateId, (req, res) => {
         });
       })
       .catch(error => {
-        res.status(500).json({ error: error });
+        res.status(500).json({
+          error: error,
+          message: "The account information could not be removed."
+        });
       });
 })
 
@@ -79,6 +93,8 @@ function validateAccountInfo(req, res, next) {
         res.status(400).json({message:"please provide the account info"})
     } else if (!req.body.name || !req.body.budget) {
         res.status(400).json({ message: "missing required name or/and budget" });
+    } else {
+        next();
     }
 }
 
